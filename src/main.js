@@ -11,6 +11,7 @@ import '@/styles/index.scss' // global css
 import App from './App'
 import store from './store'
 import router from './router'
+import VueCompositionAPI from '@vue/composition-api'// 引入组合式API
 
 import '@/icons' // icon
 import '@/permission' // permission control
@@ -27,7 +28,7 @@ if (process.env.NODE_ENV === 'production') {
   const { mockXHR } = require('../mock')
   mockXHR()
 }
-
+Vue.use(VueCompositionAPI)// 使用组合式API
 // set ElementUI lang to EN
 Vue.use(ElementUI, { locale })
 // 如果想要中文版 element-ui，按如下方式声明
