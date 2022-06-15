@@ -30,10 +30,17 @@
 			@size-change="handleSizeChange"
 			>
 		</el-pagination>
+		<el-dialog title="添加品牌" :visible.sync="dialogFormVisible">
+			<el-form>
+				<el-form-item label="品牌名称" label-width="100px">
+					<el-input placeholder="请输入品牌名称"></el-input>
+				</el-form-item>
+			</el-form>
+		</el-dialog>
 	</div>
 </template>
 <script>
-import { reactive,getCurrentInstance, onMounted } from '@vue/composition-api'
+import { reactive,toRefs,getCurrentInstance, onMounted } from '@vue/composition-api'
 
 export default {
 	name: 'tradeMark',
@@ -74,12 +81,16 @@ export default {
 			const pageSize = tradeData.limit
 			return (page - 1) * pageSize + index + 1
 		}
+		const dialogData = reactive({
+			dialogFormVisible: false
+		})
 		return {
 			getPageList,
 			tradeData,
 			handleCurrentChange,
 			handleSizeChange,
-			indexAdd
+			indexAdd,
+			...toRefs(dialogData)
 		}
 	},
 }
