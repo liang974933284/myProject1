@@ -8,12 +8,12 @@
 			<el-table-column prop="tmName" label="品牌名称" width=""></el-table-column>
 			<el-table-column prop="logoUrl" label="品牌LOGO" width="">
 				<template v-slot="{row,$index}">
-					<img src="row.logoUrl" alt="链接被改了，图片暂时无法显示" style="width: 100px;height: 100px">
+					<img :src="row.logoUrl" alt="链接被改了，图片暂时无法显示" style="width: 100px;height: 100px">
 				</template>
 			</el-table-column>
 			<el-table-column label="操作" width="">
 				<template v-slot="{row,$index}">
-					<el-button type="warning" icon="el-icon-edit" @click="updateTradeMark">修改</el-button>
+					<el-button type="warning" icon="el-icon-edit" @click="updateTradeMark(row)">修改</el-button>
 					<el-button type="danger" icon="el-icon-delete">删除</el-button>
 				</template>
 			</el-table-column>
@@ -30,13 +30,13 @@
 			@size-change="handleSizeChange"
 			>
 		</el-pagination>
-		<el-dialog title="添加品牌" :visible.sync="dialogFormVisible" modal>
+		<el-dialog :title="tmForm.id?'修改品牌':'添加品牌'" :visible.sync="dialogFormVisible" modal>
 		<!-- form表单，model属性：把表单的数据收集到那个对象身上，表单验证，也需要这个属性 -->
-			<el-form style="width: 80%;" :model="tmForm">
-				<el-form-item label="品牌名称" label-width="100px">
+			<el-form style="width: 80%;" :model="tmForm" :rules="rules" ref="ruleForm">
+				<el-form-item label="品牌名称" label-width="100px" prop="tmName">
 					<el-input v-model="tmForm.tmName" placeholder="请输入品牌名称"></el-input>
 				</el-form-item>
-				<el-form-item label="品牌LOGO" label-width="100px">
+				<el-form-item label="品牌LOGO" label-width="100px" prop="logoUrl">
 					<!-- 这里不能用v-model收集数据，因为这里不是表单元素 
 								action:上传图片地址
 								:on-success 可以监测到图片上传成功，当图片上传成功时，会执行一次
@@ -63,6 +63,8 @@
 </template>
 <script>
 import { reactive,toRefs,getCurrentInstance, onMounted } from '@vue/composition-api'
+import { validate } from 'json-schema';
+import { async } from 'q';
 
 export default {
 	name: 'tradeMark',
@@ -76,7 +78,7 @@ export default {
 			list: []// 列表展示的数据
 		})
 		onMounted(() => {
-			getPageList();
+			getPageList()
 		})
 		//获取品牌列表数据
 		async function getPageList() {
@@ -111,17 +113,32 @@ export default {
 			tmForm: {
 				tmName: '',
 				logoUrl: ''
+			},
+			// 表单验证规则
+			rules: {
+				tmName: [
+            { required: true, message: '请输入品牌名称', trigger: 'blur' },
+            { min: 2, max: 10, message: '长度在 2 到 10 个字符', trigger: 'change' }
+          ],
+				logoUrl: [
+					{ required: true, message: '请选择品牌图片'}
+				],
 			}
 		})
 		// 添加一个品牌
 		function showDialog() {
+			delete dialogData.tmForm.id
 			dialogData.tmForm.tmName = ''
 			dialogData.tmForm.logoUrl = ''
 			dialogData.dialogFormVisible = true
 		}
 		// 修改一个品牌
-		function updateTradeMark() {
+		function updateTradeMark(row) {
+			// row是当前用户选中这个品牌的信息
+			// 这里扩展运算符将值赋给tmForm的对应属性
+			// 如果直接写dialogData.tmForm = row 会将tmForm和row指向同一个地址，由于tmForm和页面的表单数据绑定，所以这样会变成直接同步修改表单内容（即使不点确定按钮）
 			dialogData.dialogFormVisible = true
+			dialogData.tmForm = {...row}
 		}
 		// 图片上传成功
 		function handleAvatarSuccess(res, file) {
@@ -142,16 +159,24 @@ export default {
 			}
 			return isJPG && isLt2M;
 		}
-		// 添加按钮（添加品牌或修改品牌）
-		async function addOrUpdateTradeMark() {
-			dialogData.dialogFormVisible = false
-			// 发送请求
-			let result = await proxy.$api.trademark.reqAddOrUpdateTradeMark(dialogData.tmForm)
-			if(result.code === 200){
-				//弹出信息
-				proxy.$message(dialogData.tmForm.id?{message:'修改品牌成功',type: 'success'}:{message:'添加品牌成功',type: 'success'})
-				getPageList()
-			}
+		// 添加里的确定按钮（添加品牌或修改品牌）
+		function addOrUpdateTradeMark() {
+			proxy.$refs['ruleForm'].validate(async (valid) => {
+				if (valid) {
+					dialogData.dialogFormVisible = false
+					// 发送请求
+					let result = await proxy.$api.trademark.reqAddOrUpdateTradeMark(dialogData.tmForm)
+					if(result.code === 200){
+						//弹出信息
+						proxy.$message(dialogData.tmForm.id?{message:'修改品牌成功',type: 'success'}:{message:'添加品牌成功',type: 'success'})
+						// 如果是添加品牌信息，停留在第一页；如果是修改信息，应该停留在当前页
+						getPageList(dialogData.tmForm.id?tradeData.page:1)
+					}
+				} else {
+					console.log("error submit!!")
+					return false
+				}
+			})
 		}
 		return {
 			getPageList,
