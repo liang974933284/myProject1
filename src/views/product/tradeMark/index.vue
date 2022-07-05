@@ -1,43 +1,27 @@
 <template>
   <div>
-    <el-button
-      @click="showDialog"
-      type="primary"
-      icon="el-icon-plus"
-      style="margin: 10px 0px 20px"
-    >
+    <el-button @click="showDialog" type="primary" icon="el-icon-plus" style="margin: 10px 0px 20px">
       添加
     </el-button>
     <el-table style="width: 100%" border :data="tradeData.list">
-      <el-table-column
-        type="index"
-        :index="indexAdd"
-        label="序号"
-        width=""
-      ></el-table-column>
-      <el-table-column
-        prop="tmName"
-        label="品牌名称"
-        width=""
-      ></el-table-column>
+      <el-table-column type="index" :index="indexAdd" label="序号" width=""></el-table-column>
+      <el-table-column prop="tmName" label="品牌名称" width=""></el-table-column>
       <el-table-column prop="logoUrl" label="品牌LOGO" width="">
         <template v-slot="{ row, $index }">
           <img
             :src="row.logoUrl"
             alt="链接被改了，图片暂时无法显示"
-            style="width: 100px; height: 100px"
-          />
+            style="width: 100px; height: 100px" />
         </template>
       </el-table-column>
       <el-table-column label="操作" width="">
         <template v-slot="{ row, $index }">
-          <el-button
-            type="warning"
-            icon="el-icon-edit"
-            @click="updateTradeMark(row)"
+          <el-button type="warning" icon="el-icon-edit" @click="updateTradeMark(row)" size="mini"
             >修改</el-button
           >
-          <el-button type="danger" icon="el-icon-delete">删除</el-button>
+          <el-button type="danger" icon="el-icon-delete" @click="deleteTradeMark(row)" size="mini"
+            >删除</el-button
+          >
         </template>
       </el-table-column>
     </el-table>
@@ -50,21 +34,13 @@
       :page-sizes="[3, 5, 10]"
       layout=" prev, pager, next, jumper, ->, total,sizes"
       @current-change="handleCurrentChange"
-      @size-change="handleSizeChange"
-    >
+      @size-change="handleSizeChange">
     </el-pagination>
-    <el-dialog
-      :title="tmForm.id ? '修改品牌' : '添加品牌'"
-      :visible.sync="dialogFormVisible"
-      modal
-    >
+    <el-dialog :title="tmForm.id ? '修改品牌' : '添加品牌'" :visible.sync="dialogFormVisible" modal>
       <!-- form表单，model属性：把表单的数据收集到那个对象身上，表单验证，也需要这个属性 -->
       <el-form style="width: 80%" :model="tmForm" :rules="rules" ref="ruleForm">
         <el-form-item label="品牌名称" label-width="100px" prop="tmName">
-          <el-input
-            v-model="tmForm.tmName"
-            placeholder="请输入品牌名称"
-          ></el-input>
+          <el-input v-model="tmForm.tmName" placeholder="请输入品牌名称"></el-input>
         </el-form-item>
         <el-form-item label="品牌LOGO" label-width="100px" prop="logoUrl">
           <!-- 这里不能用v-model收集数据，因为这里不是表单元素 
@@ -77,35 +53,25 @@
             action="/dev-api/admin/product/fileUpload"
             :show-file-list="false"
             :on-success="handleAvatarSuccess"
-            :before-upload="beforeAvatarUpload"
-          >
+            :before-upload="beforeAvatarUpload">
             <img v-if="tmForm.logoUrl" :src="tmForm.logoUrl" class="avatar" />
             <i v-else class="el-icon-plus avatar-uploader-icon"></i>
-            <div slot="tip" class="el-upload__tip">
-              只能上传jpg/png文件，且不超过500kb
-            </div>
+            <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过500kb</div>
           </el-upload>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="dialogFormVisible = false">取 消</el-button>
-        <el-button type="primary" @click="addOrUpdateTradeMark"
-          >确 定</el-button
-        >
+        <el-button type="primary" @click="addOrUpdateTradeMark">确 定</el-button>
       </div>
     </el-dialog>
   </div>
 </template>
 <script>
-import {
-  reactive,
-  toRefs,
-  getCurrentInstance,
-  onMounted,
-} from "@vue/composition-api";
+import { reactive, toRefs, getCurrentInstance, onMounted } from '@vue/composition-api';
 
 export default {
-  name: "tradeMark",
+  name: 'tradeMark',
   setup() {
     const { proxy } = getCurrentInstance();
     /* 获取品牌管理的列表数据 */
@@ -128,7 +94,7 @@ export default {
       }
     }
     // 当前页码变化时展示数据
-    function handleCurrentChange(pager) {
+    function handleCurrentChange(pager = 1) {
       tradeData.page = pager;
       getPageList();
     }
@@ -146,31 +112,32 @@ export default {
     /* 添加按钮展示dialog表单 */
     const dialogData = reactive({
       dialogFormVisible: false,
-      imageUrl: "",
+      imageUrl: '',
       // 收集品牌信息,对象身上的属性不能瞎写，需要跟后端接收对象属性名称保持一致
       tmForm: {
-        tmName: "",
-        logoUrl: "",
+        tmName: '',
+        logoUrl: '',
       },
       // 表单验证规则
       rules: {
         tmName: [
-          { required: true, message: "请输入品牌名称", trigger: "blur" },
+          { required: true, message: '请输入品牌名称', trigger: 'blur' },
           {
             min: 2,
             max: 10,
-            message: "长度在 2 到 10 个字符",
-            trigger: "change",
+            message: '长度在 2 到 10 个字符',
+            trigger: 'change',
           },
         ],
-        logoUrl: [{ required: true, message: "请选择品牌图片" }],
+        logoUrl: [{ required: true, message: '请选择品牌图片' }],
       },
     });
+    /* 添加或修改品牌 */
     // 添加一个品牌
     function showDialog() {
       delete dialogData.tmForm.id;
-      dialogData.tmForm.tmName = "";
-      dialogData.tmForm.logoUrl = "";
+      dialogData.tmForm.tmName = '';
+      dialogData.tmForm.logoUrl = '';
       dialogData.dialogFormVisible = true;
     }
     // 修改一个品牌
@@ -189,41 +156,70 @@ export default {
     }
     // 图片上传之前
     function beforeAvatarUpload(file) {
-      const isJPG = file.type === "image/jpeg";
+      const isJPG = file.type === 'image/jpeg';
       const isLt2M = file.size / 1024 / 1024 < 2;
 
       if (!isJPG) {
-        this.$message.error("上传头像图片只能是 JPG 格式!");
+        this.$message.error('上传头像图片只能是 JPG 格式!');
       }
       if (!isLt2M) {
-        this.$message.error("上传头像图片大小不能超过 2MB!");
+        this.$message.error('上传头像图片大小不能超过 2MB!');
       }
       return isJPG && isLt2M;
     }
     // 添加里的确定按钮（添加品牌或修改品牌）
     function addOrUpdateTradeMark() {
-      proxy.$refs["ruleForm"].validate(async (valid) => {
+      proxy.$refs['ruleForm'].validate(async (valid) => {
         if (valid) {
           dialogData.dialogFormVisible = false;
           // 发送请求
-          let result = await proxy.$api.trademark.reqAddOrUpdateTradeMark(
-            dialogData.tmForm
-          );
+          let result = await proxy.$api.trademark.reqAddOrUpdateTradeMark(dialogData.tmForm);
           if (result.code === 200) {
             //弹出信息
             proxy.$message(
               dialogData.tmForm.id
-                ? { message: "修改品牌成功", type: "success" }
-                : { message: "添加品牌成功", type: "success" }
+                ? { message: '修改品牌成功', type: 'success' }
+                : { message: '添加品牌成功', type: 'success' }
             );
             // 如果是添加品牌信息，停留在第一页；如果是修改信息，应该停留在当前页
-            getPageList(dialogData.tmForm.id ? tradeData.page : 1);
+            handleCurrentChange(dialogData.tmForm.id ? tradeData.page : 1);
           }
         } else {
-          console.log("error submit!!");
+          console.log('error submit!!');
           return false;
         }
       });
+    }
+    function deleteTradeMark(row) {
+      proxy
+        .$confirm(`是否确定删除"${row.tmName}"?`, '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+        })
+        .then(async () => {
+          // 当用户单击确定按钮时会触发
+          let result = await proxy.$api.trademark.reqDeleteTradeMark(row.id);
+          if (result.code === 200) {
+            getPageList();
+            proxy.$message({
+              type: 'success',
+              message: '删除成功！',
+            });
+          } else {
+            proxy.$message({
+              type: 'error',
+              message: '删除失败！',
+            });
+          }
+        })
+        .catch(() => {
+          // 当用户点击取消按钮时会触发
+          proxy.$message({
+            type: 'info',
+            message: '已取消删除',
+          });
+        });
     }
     return {
       getPageList,
@@ -237,6 +233,7 @@ export default {
       handleAvatarSuccess,
       beforeAvatarUpload,
       addOrUpdateTradeMark,
+      deleteTradeMark,
     };
   },
 };
@@ -249,9 +246,11 @@ export default {
   position: relative;
   overflow: hidden;
 }
+
 .avatar-uploader .el-upload:hover {
   border-color: #409eff;
 }
+
 .avatar-uploader-icon {
   font-size: 28px;
   color: #8c939d;
@@ -260,6 +259,7 @@ export default {
   line-height: 178px;
   text-align: center;
 }
+
 .avatar {
   width: 178px;
   height: 178px;
